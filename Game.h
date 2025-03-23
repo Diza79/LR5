@@ -21,7 +21,6 @@ private:
     Score score; // Счет
     GameSettings settings; // Настройки игры
     bool isGameOver; // Флаг окончания игры
-    std::default_random_engine random; // Генератор случайных чисел
 
     // Генерация случайной буквы
     GameObject* generateRandomLetter() {
@@ -30,7 +29,6 @@ private:
     }
 
     void initializeBoard() {
-        // Заполнение поля случайными буквами
         for (int i = 0; i < settings.getHeight(); i++) {
             for (int j = 0; j < settings.getWidth(); j++) {
                 board->setCell(i, j, generateRandomLetter());
@@ -39,37 +37,34 @@ private:
     }
 
     bool checkForTrio() {
-        // Проверка на наличие трио
         bool foundTrio = false;
 
-        // Проверка по горизонтали
         for (int i = 0; i < settings.getHeight(); i++) {
             for (int j = 0; j < settings.getWidth() - 2; j++) {
-                GameObject first = board->getCell(i, j);
-                GameObject second = board->getCell(i, j + 1);
-                GameObject third = board->getCell(i, j + 2);
-                if (first.getType() == second.getType() && first.getType() == third.getType() && first.getType() != '.') {
+                GameObject* first = board->getCell(i, j);
+                GameObject* second = board->getCell(i, j + 1);
+                GameObject* third = board->getCell(i, j + 2);
+                if (first->getType() == second->getType() && first->getType() == third->getType() && first->getType() != '.') {
                     foundTrio = true;
                     // Удаляем трио
-                    board->setCell(i, j, GameObject(i, j, '.'));
-                    board->setCell(i, j + 1, GameObject(i, j + 1, '.'));
-                    board->setCell(i, j + 2, GameObject(i, j + 2, '.'));
+                    board->setCell(i, j, new GameObject(i, j, '.'));
+                    board->setCell(i, j + 1, new GameObject(i, j + 1, '.'));
+                    board->setCell(i, j + 2, new GameObject(i, j + 2, '.'));
                 }
             }
         }
 
-        // Проверка по вертикали
         for (int j = 0; j < settings.getWidth(); j++) {
             for (int i = 0; i < settings.getHeight() - 2; i++) {
-                GameObject first = board->getCell(i, j);
-                GameObject second = board->getCell(i + 1, j);
-                GameObject third = board->getCell(i + 2, j);
-                if (first.getType() == second.getType() && first.getType() == third.getType() && first.getType() != '.') {
+                GameObject* first = board->getCell(i, j);
+                GameObject* second = board->getCell(i + 1, j);
+                GameObject* third = board->getCell(i + 2, j);
+                if (first->getType() == second->getType() && first->getType() == third->getType() && first->getType() != '.') {
                     foundTrio = true;
                     // Удаляем трио
-                    board->setCell(i, j, GameObject(i, j, '.'));
-                    board->setCell(i + 1, j, GameObject(i + 1, j, '.'));
-                    board->setCell(i + 2, j, GameObject(i + 2, j, '.'));
+                    board->setCell(i, j, new GameObject(i, j, '.'));
+                    board->setCell(i + 1, j, new GameObject(i + 1, j, '.'));
+                    board->setCell(i + 2, j, new GameObject(i + 2, j, '.'));
                 }
             }
         }
@@ -78,28 +73,24 @@ private:
     }
 
     void generateNewLetters() {
-        // Обновляем поле, чтобы буквы падали вниз
         for (int j = 0; j < settings.getWidth(); j++) {
             for (int i = settings.getHeight() - 1; i >= 0; i--) {
-                if (board->getCell(i, j).getType() == '.') {
-                    // Сдвигаем буквы вниз
+                if (board->getCell(i, j)->getType() == '.') {
                     for (int k = i - 1; k >= 0; k--) {
-                        GameObject letter = board->getCell(k, j);
-                        if (letter.getType() != '.') {
+                        GameObject* letter = board->getCell(k, j);
+                        if (letter->getType() != '.') {
                             board->setCell(i, j, letter); // Перемещаем букву вниз
-                            board->setCell(k, j, GameObject(k, j, '.')); // Освобождаем старую позицию
+                            board->setCell(k, j, new GameObject(k, j, '.')); // Освобождаем старую позицию
                             break;
                         }
                     }
-                    // Генерация новых букв для пустых клеток
-                    if (board->getCell(i, j).getType() == '.') {
+                    if (board->getCell(i, j)->getType() == '.') {
                         board->setCell(i, j, generateRandomLetter());
                     }
                 }
             }
         }
-        
-        // Проверяем наличие трио после генерации новых букв
+
         if (checkForTrio()) {
             score.updateScore(1); // Обновляем счет, если нашли трио
             generateNewLetters(); // Рекурсивно вызываем, если снова есть трио
@@ -107,7 +98,6 @@ private:
     }
 
 public:
-    // Конструктор игры
     Game(const GameSettings& settings, const std::string& playerName) 
         : settings(settings), isGameOver(false),
           board(std::make_unique<GameBoard>(settings.getWidth(), settings.getHeight())),
@@ -116,7 +106,6 @@ public:
         initializeBoard(); // Инициализация игрового поля
     }
 
-    // Отображение информации об игре
     void display() {
         std::cout << "Игрок: " << player->getName() << std::endl;
         std::cout << "Счет: " << score.getCurrentScore() << std::endl;
@@ -125,13 +114,11 @@ public:
         board->displayBoard(); // Отображение игрового поля
     }
 
-    // Выполнение хода
     void makeMove(const Cell& from, const Cell& to) {
-        // Логика перемещения
         if (board->isValidMove(from, to)) {
-            GameObject movingObject = board->getCell(from.getX(), from.getY());
+            GameObject* movingObject = board->getCell(from.getX(), from.getY());
             board->setCell(to.getX(), to.getY(), movingObject); // Перемещаем объект
-            board->setCell(from.getX(), from.getY(), GameObject(from.getX(), from.getY(), '.')); // Освобождаем старую позицию
+            board->setCell(from.getX(), from.getY(), new GameObject(from.getX(), from.getY(), '.')); // Освобождаем старую позицию
             score.incrementMoveCount(); // Увеличиваем счетчик ходов
             generateNewLetters(); // Генерируем новые буквы после хода
         } else {
@@ -139,37 +126,30 @@ public:
         }
     }
 
-    // Проверка на победу
     bool checkWin() {
         return score.getCurrentScore() >= settings.getWinCondition();
     }
 
-    // Основной цикл игры
     void play() {
         while (!isGameOver) {
             display(); // Отображаем информацию об игре
             
-            // Логика ввода координат и выполнения ходов
             int fromX, fromY, toX, toY;
             std::cout << "Введите координаты клетки, откуда хотите переместить (x y): ";
             std::cin >> fromX >> fromY;
             std::cout << "Введите координаты клетки, куда хотите переместить (x y): ";
             std::cin >> toX >> toY;
 
-            // Создаем объекты Cell для перемещения
             Cell from(fromX, fromY);
             Cell to(toX, toY);
 
-            // Выполняем ход
             makeMove(from, to);
 
-            // Проверяем на победу
             if (checkWin()) {
                 std::cout << "Поздравляем! Вы выиграли!" << std::endl;
                 isGameOver = true; // Завершаем игру
             }
 
-            // Проверка на окончание игры
             if (score.getMoveCount() >= settings.getMaxMoves()) {
                 std::cout << "Игра окончена! Вы исчерпали все ходы." << std::endl;
                 isGameOver = true; // Завершаем игру
@@ -179,3 +159,5 @@ public:
 };
 
 #endif // GAME_H
+
+       
